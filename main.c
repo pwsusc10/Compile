@@ -82,7 +82,7 @@ int main(void)
                             break;
                     }
                 }
-                // 뒤에 알바벳이 다시 온다면 에러 출력 다른 문자라면 symbol table에 추가
+                // 뒤에 알바벳이 다시 온다면 에러 출력 다른 문자라면 token list에 추가
                 if ((buffer[i] >= 'A' && buffer[i] <= 'Z') || (buffer[i] >= 'a' && buffer[i] <= 'z'))
                 {
                     // error
@@ -118,10 +118,26 @@ int main(void)
                 string_idx++;
                 i++;
 
-                if ((buffer[i] >= '0' && buffer[i] <= '9'))
+                // +0, -0에 대한 오류 처리.
+                if (buffer[i] == '0' && buffer[i + 1] != '.')
                 {
                     string[string_idx] = buffer[i];
                     string_idx++;
+                    i++;
+
+                    // error code
+                    token_list[token_idx].code_num = 0;
+                    token_list[token_idx].idx = f_line;
+                    strcpy(token_list[token_idx].data, string);
+                    token_idx++;
+                }
+
+                // 정수 실수 처리
+                else if ((buffer[i] >= '0' && buffer[i] <= '9'))
+                {
+                    string[string_idx] = buffer[i];
+                    string_idx++;
+
                     // 숫자 다 빼주기
                     while (1)
                     {
@@ -135,16 +151,54 @@ int main(void)
                             break;
                     }
 
-                    // token_list에 저장
-                    // int code
-                    token_list[token_idx].code_num = 3;
-                    strcpy(token_list[token_idx].data, string);
-                    strcpy(token_list[token_idx].name, "INT");
-                    token_idx++;
+                    // 소수라면
+                    if (buffer[i] == '.')
+                    {
+                        string[string_idx] = buffer[i];
+                        string_idx++;
 
-                    memset(string, 0, max_len * sizeof(char));
-                    string_idx = 0;
+                        // 숫자 다 빼주기
+                        while (1)
+                        {
+                            i++;
+                            if ((buffer[i] >= '0' && buffer[i] <= '9'))
+                            {
+                                string[string_idx] = buffer[i];
+                                string_idx++;
+                            }
+                            else
+                                break;
+                        }
+                        // +0.30같은 뒤에 0이 붙는 에러 처리
+                        if (buffer[i - 1] == '0')
+                        {
+                            // error code
+                            token_list[token_idx].code_num = 0;
+                            token_list[token_idx].idx = f_line;
+                            strcpy(token_list[token_idx].data, string);
+                            token_idx++;
+                        }
+                        else // 실수 처리
+                        {
+                            // token_list에 저장
+                            // float code
+                            token_list[token_idx].code_num = 4;
+                            strcpy(token_list[token_idx].data, string);
+                            strcpy(token_list[token_idx].name, "FLOAT");
+                            token_idx++;
+                        }
+                    }
+                    else // 정수라면 정수처리
+                    {
+                        // token_list에 저장
+                        // int code
+                        token_list[token_idx].code_num = 3;
+                        strcpy(token_list[token_idx].data, string);
+                        strcpy(token_list[token_idx].name, "INT");
+                        token_idx++;
+                    }
                 }
+                // 단순 +, - 연산자 처리
                 else
                 {
                     if (string[0] == '+')
@@ -153,9 +207,6 @@ int main(void)
                         strcpy(token_list[token_idx].data, string);
                         strcpy(token_list[token_idx].name, "PLUS");
                         token_idx++;
-
-                        memset(string, 0, max_len * sizeof(char));
-                        string_idx = 0;
                     }
                     else
                     {
@@ -163,13 +214,12 @@ int main(void)
                         strcpy(token_list[token_idx].data, string);
                         strcpy(token_list[token_idx].name, "MINUS");
                         token_idx++;
-
-                        memset(string, 0, max_len * sizeof(char));
-                        string_idx = 0;
                     }
                 }
+                memset(string, 0, max_len * sizeof(char));
+                string_idx = 0;
             }
-            // '/', '*' operator
+            // '/', '*' , '=', ':' operator
             else if (buffer[i] == '/')
             {
 
@@ -178,6 +228,7 @@ int main(void)
                 strcpy(token_list[token_idx].data, string);
                 strcpy(token_list[token_idx].name, "DIVISION");
                 token_idx++;
+                i++;
 
                 memset(string, 0, max_len * sizeof(char));
                 string_idx = 0;
@@ -190,6 +241,7 @@ int main(void)
                 strcpy(token_list[token_idx].data, string);
                 strcpy(token_list[token_idx].name, "MULTI");
                 token_idx++;
+                i++;
 
                 memset(string, 0, max_len * sizeof(char));
                 string_idx = 0;
@@ -202,6 +254,7 @@ int main(void)
                 strcpy(token_list[token_idx].data, string);
                 strcpy(token_list[token_idx].name, "ASSIGN");
                 token_idx++;
+                i++;
 
                 memset(string, 0, max_len * sizeof(char));
                 string_idx = 0;
@@ -214,13 +267,16 @@ int main(void)
                 strcpy(token_list[token_idx].data, string);
                 strcpy(token_list[token_idx].name, "COLON");
                 token_idx++;
+                i++;
 
                 memset(string, 0, max_len * sizeof(char));
                 string_idx = 0;
             }
         }
+
     } while (fgets(buffer, 1000, stdin) != NULL);
 
+    // token 출력 처리
     for (int i = 0; i < token_idx; i++)
     {
         switch (token_list[i].code_num)
