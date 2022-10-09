@@ -198,6 +198,42 @@ int main(void)
                         token_idx++;
                     }
                 }
+                else if (buffer[i] == '.') // +.13 같은 실수 처리
+                {
+                    string[string_idx] = buffer[i];
+                    string_idx++;
+
+                    // 숫자 다 빼주기
+                    while (1)
+                    {
+                        i++;
+                        if ((buffer[i] >= '0' && buffer[i] <= '9'))
+                        {
+                            string[string_idx] = buffer[i];
+                            string_idx++;
+                        }
+                        else
+                            break;
+                    }
+                    // +0.30같은 뒤에 0이 붙는 에러 처리
+                    if (buffer[i - 1] == '0')
+                    {
+                        // error code
+                        token_list[token_idx].code_num = 0;
+                        token_list[token_idx].idx = f_line;
+                        strcpy(token_list[token_idx].data, string);
+                        token_idx++;
+                    }
+                    else // 실수 처리
+                    {
+                        // token_list에 저장
+                        // float code
+                        token_list[token_idx].code_num = 4;
+                        strcpy(token_list[token_idx].data, string);
+                        strcpy(token_list[token_idx].name, "FLOAT");
+                        token_idx++;
+                    }
+                }
                 // 단순 +, - 연산자 처리
                 else
                 {
@@ -272,8 +308,128 @@ int main(void)
                 memset(string, 0, max_len * sizeof(char));
                 string_idx = 0;
             }
-        }
 
+            // 정수 실수 처리
+            if ((buffer[i] >= '0' && buffer[i] <= '9') || buffer[i] == '.')
+            {
+                // 00, 01, 02과 같이 앞에 0이 오는 것에 대한 오류 처리.
+                if (buffer[i] == '0' && (buffer[i + 1] >= '0' && buffer[i + 1] <= '9'))
+                {
+                    string[string_idx] = buffer[i];
+                    string_idx++;
+                    i++;
+
+                    // error code
+                    token_list[token_idx].code_num = 0;
+                    token_list[token_idx].idx = f_line;
+                    strcpy(token_list[token_idx].data, string);
+                    token_idx++;
+                }
+                // 정수 실수 처리
+                else if ((buffer[i] >= '0' && buffer[i] <= '9'))
+                {
+                    string[string_idx] = buffer[i];
+                    string_idx++;
+
+                    // 숫자 다 빼주기
+                    while (1)
+                    {
+                        i++;
+                        if ((buffer[i] >= '0' && buffer[i] <= '9'))
+                        {
+                            string[string_idx] = buffer[i];
+                            string_idx++;
+                        }
+                        else
+                            break;
+                    }
+                    // 소수라면
+                    if (buffer[i] == '.')
+                    {
+                        string[string_idx] = buffer[i];
+                        string_idx++;
+
+                        // 숫자 다 빼주기
+                        while (1)
+                        {
+                            i++;
+                            if ((buffer[i] >= '0' && buffer[i] <= '9'))
+                            {
+                                string[string_idx] = buffer[i];
+                                string_idx++;
+                            }
+                            else
+                                break;
+                        }
+                        // +0.30같은 뒤에 0이 붙는 에러 처리
+                        if (buffer[i - 1] == '0')
+                        {
+                            // error code
+                            token_list[token_idx].code_num = 0;
+                            token_list[token_idx].idx = f_line;
+                            strcpy(token_list[token_idx].data, string);
+                            token_idx++;
+                        }
+                        else // 실수 처리
+                        {
+                            // token_list에 저장
+                            // float code
+                            token_list[token_idx].code_num = 4;
+                            strcpy(token_list[token_idx].data, string);
+                            strcpy(token_list[token_idx].name, "FLOAT");
+                            token_idx++;
+                        }
+                    }
+                    else // 정수라면 정수처리
+                    {
+                        // token_list에 저장
+                        // int code
+                        token_list[token_idx].code_num = 3;
+                        strcpy(token_list[token_idx].data, string);
+                        strcpy(token_list[token_idx].name, "INT");
+                        token_idx++;
+                    }
+                }
+                else if (buffer[i] == '.') // +.13 같은 실수 처리
+                {
+                    string[string_idx] = buffer[i];
+                    string_idx++;
+                    // 숫자 다 빼주기
+                    while (1)
+                    {
+                        i++;
+                        if ((buffer[i] >= '0' && buffer[i] <= '9'))
+                        {
+                            string[string_idx] = buffer[i];
+                            string_idx++;
+                        }
+                        else
+                            break;
+                    }
+                    // +0.30같은 뒤에 0이 붙는 에러 처리
+                    if (buffer[i - 1] == '0')
+                    {
+                        // error code
+                        token_list[token_idx].code_num = 0;
+                        token_list[token_idx].idx = f_line;
+                        strcpy(token_list[token_idx].data, string);
+                        token_idx++;
+                    }
+                    else // 실수 처리
+                    {
+                        // token_list에 저장
+                        // float code
+                        token_list[token_idx].code_num = 4;
+                        strcpy(token_list[token_idx].data, string);
+                        strcpy(token_list[token_idx].name, "FLOAT");
+                        token_idx++;
+                    }
+                }
+                // 메모리
+                memset(string, 0, max_len * sizeof(char));
+                string_idx = 0;
+            }
+        }
     } while (fgets(buffer, 1000, stdin) != NULL);
 
     // token 출력 처리
