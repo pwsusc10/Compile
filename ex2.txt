@@ -1,0 +1,4 @@
+a = 00; abc123def
+b = +0.130;
+str = "hello\
+my world!";
